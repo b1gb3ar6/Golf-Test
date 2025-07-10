@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Golf Shot Randomizer & Scorer</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
+        input, button { margin: 10px; padding: 5px; }
+        #results { margin-top: 20px; }
+        .shot { margin: 10px; padding: 10px; border: 1px solid #ccc; }
+    </style>
+</head>
+<body>
+    <h1>Golf Shot Randomizer & Scorer</h1>
+    <div>
+        <label>Min Distance (yards):</label>
+        <input type="number" id="minRange" value="50">
+    </div>
+    <div>
+        <label>Max Distance (yards):</label>
+        <input type="number" id="maxRange" value="200">
+    </div>
+    <div>
+        <label>Number of Shots:</label>
+        <input type="number" id="quantity" value="5">
+    </div>
+    <button onclick="generateShots()">Generate Shots</button>
+    <div id="results"></div>
+
+    <script>
+        function generateShots() {
+            const min = parseInt(document.getElementById('minRange').value);
+            const max = parseInt(document.getElementById('maxRange').value);
+            const quantity = parseInt(document.getElementById('quantity').value);
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '';
+
+            if (isNaN(min) || isNaN(max) || isNaN(quantity) || min >= max || quantity < 1) {
+                resultsDiv.innerHTML = 'Please enter valid numbers (min < max, quantity ≥ 1).';
+                return;
+            }
+
+            for (let i = 0; i < quantity; i++) {
+                const distance = Math.floor(Math.random() * (max - min + 1)) + min;
+                const shotDiv = document.createElement('div');
+                shotDiv.className = 'shot';
+                shotDiv.innerHTML = `
+                    <p>Shot ${i + 1}: Hit to ${distance} yards</p>
+                    <label>Total Distance (yards):</label>
+                    <input type="number" id="totalDistance${i}" placeholder="Enter total distance">
+                    <label>Lateral Deviation (feet, left or right):</label>
+                    <input type="number" id="lateralDeviation${i}" placeholder="Enter feet off target line">
+                    <button onclick="calculateScore(${i}, ${distance})">Score Shot</button>
+                    <p id="score${i}"></p>
+                `;
+                resultsDiv.appendChild(shotDiv);
+            }
+        }
+
+        function calculateScore(shotIndex, targetDistance) {
+            const totalDistance = parseFloat(document.getElementById(`totalDistance${shotIndex}`).value);
+            const lateralDeviation = parseFloat(document.getElementById(`lateralDeviation${shotIndex}`).value);
+            const scoreElement = document.getElementById(`score${shotIndex}`);
+
+            if (isNaN(totalDistance) || isNaN(lateralDeviation)) {
+                scoreElement.innerHTML = 'Please enter valid numbers for total distance and lateral deviation.';
+                return;
+            }
+
+            // Distance Accuracy Score
+            const distanceError = Math.abs(targetDistance - totalDistance);
+            const maxDistanceError = targetDistance * 0.2; // 20% of target distance
+            const distanceScore = Math.max(0, 50 * (1 - distanceError / maxDistanceError));
+
+            // Lateral Accuracy Score
+            const maxLateralDeviation = 90; // 90 feet (30 yards)
+            const lateralScore = Math.max(0, 50 * (1 - Math.abs(lateralDeviation) / maxLateralDeviation));
+
+            // Total Score
+            const totalScore = Math.round(distanceScore + lateralScore);
+
+            scoreElement.innerHTML = `Score: ${totalScore}/100`;
+        }
+    </script>
+</body>
+</html>
